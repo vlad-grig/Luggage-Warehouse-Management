@@ -6,6 +6,7 @@ public class Main {
     public static void main(String[] args) {
 
         LuggageWarehouseManagementApp luggageWarehouseManagementApp = new LuggageWarehouseManagementApp();
+        luggageWarehouseManagementApp.load();
         luggageWarehouseManagementApp.start();
     }
 }
