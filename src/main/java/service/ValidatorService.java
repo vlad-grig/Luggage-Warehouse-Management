@@ -1,32 +1,27 @@
 package service;
 
-import model.Warehouse;
-import util.LuggageWarehouseManagementApp;
-
 public class ValidatorService {
 
-    private Warehouse warehouse;
     private IOService ioService;
 
-    public ValidatorService(Warehouse warehouse, IOService ioService) {
-        this.warehouse = warehouse;
+    public ValidatorService(IOService ioService) {
         this.ioService = ioService;
     }
 
     public boolean validateUserInput(String userInput) {
         try {
-            if (Integer.parseInt(userInput) == 1) {
+            if (Integer.parseInt(userInput) == 1 || Integer.parseInt(userInput) == 2) {
                 return true;
             } else if (Integer.parseInt(userInput) == 0) {
-                ioService.displayInfo("Thank you! Have a nice day!\n\n");
+                ioService.displayInfo("Thank you! Have a nice day!");
                 return false;
             } else {
-                ioService.displayError(userInput + " is not a valid option!\n\n");
+                ioService.displayError(userInput + " is not a valid option!");
                 return false;
             }
         }
         catch( NumberFormatException numberFormatException ) {
-            ioService.displayError(userInput + " is not a valid option!\n\n");
+            ioService.displayError(userInput + " is not a valid option!");
             return false;
         }
     }

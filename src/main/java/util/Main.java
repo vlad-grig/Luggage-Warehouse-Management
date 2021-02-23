@@ -1,7 +1,5 @@
 package util;
 
-import util.LuggageWarehouseManagementApp;
-
 public class Main {
     public static void main(String[] args) {
 
