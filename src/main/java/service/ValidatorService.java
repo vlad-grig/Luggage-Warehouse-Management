@@ -1,11 +1,16 @@
 package service;
 
+import java.util.Iterator;
+import java.util.Map;
+
 public class ValidatorService {
 
     private IOService ioService;
+    private DelayService delayService;
 
     public ValidatorService(IOService ioService) {
         this.ioService = ioService;
+        this.delayService = new DelayService();
     }
 
     public boolean validateUserInput(String userInput) {
@@ -14,15 +19,29 @@ public class ValidatorService {
                 return true;
             } else if (Integer.parseInt(userInput) == 0) {
                 ioService.displayInfo("Thank you! Have a nice day!");
+                delayService.introduceDelay();
                 return false;
             } else {
                 ioService.displayError(userInput + " is not a valid option!");
+                delayService.introduceDelay();
                 return false;
             }
         }
         catch( NumberFormatException numberFormatException ) {
             ioService.displayError(userInput + " is not a valid option!");
+            delayService.introduceDelay();
             return false;
         }
+    }
+
+    public boolean validateUniqueCode(String userInputUniqueCode, Map <Integer, String> idCodeMap) {
+        Iterator <Map.Entry <Integer, String>> iterator = idCodeMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, String> entry = iterator.next();
+            if (entry.getValue().equals(userInputUniqueCode)){
+                return true;
+            }
+        }
+        return false;
     }
 }

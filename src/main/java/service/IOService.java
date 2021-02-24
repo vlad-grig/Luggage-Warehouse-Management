@@ -34,7 +34,10 @@ public class IOService {
 
     private void displayAvailableStoragePlaces(StoragePlace storagePlace) {
         displayLocalDateTime();
-        displayInfo("At the moment there are " + storagePlace.getAvailableStoragePlace() + " places available!\n");
+        displayInfo("Available storage places: " + storagePlace.getAvailableStoragePlace());
+        displayInfo("Occupied storage places: " + storagePlace.getOccupiedStoragePlace());
+        displayInfo("Total storage places: " + storagePlace.getTotalStoragePlace()+ "\n");
+
     }
 
     private void displayLocalDateTime() {
@@ -66,6 +69,7 @@ public class IOService {
 
     public String getUserConfirmation() {
         displayInfo("Type 'yes' for confirmation closure: ");
+        displayInfo("Type 'cancel' for exit: ");
         return scanner.nextLine();
     }
 }

@@ -1,6 +1,7 @@
 package util;
 
 import model.StoragePlace;
+import service.DelayService;
 import service.IOService;
 import service.ValidatorService;
 
@@ -17,6 +18,7 @@ public class LuggageWarehouseManagementApp {
     private Map <Integer, String> idAvailabilityMap;
     private Map <Integer, String> idCodeMap;
     private Map <Integer, String> idLocalDateTimeMap;
+    private DelayService delayService;
 
     public LuggageWarehouseManagementApp() {
         this.ioService = new IOService();
@@ -25,11 +27,13 @@ public class LuggageWarehouseManagementApp {
         this.idAvailabilityMap = new TreeMap <>();
         this.idCodeMap = new TreeMap <>();
         this.idLocalDateTimeMap = new TreeMap <>();
+        this.delayService = new DelayService();
     }
 
 
     public void start() {
         while (true) {
+            ioService.displayInfo("........................................................................");
             ioService.displayMenu(storagePlace);
             String userInput = ioService.getUserInput();
             processUserInput(userInput);
@@ -40,50 +44,86 @@ public class LuggageWarehouseManagementApp {
     private void processUserInput(String userInput) {
         boolean successfulValidation = validatorService.validateUserInput(userInput);
         if (!successfulValidation) {
-            ioService.displayInfo("........................................................................");
             start();
         } else {
             switch (userInput) {
                 case "1": {
-                    if (storagePlace.getAvailableStoragePlace() == 0 ){
-                        ioService.displayError("No storage place is available at the moment!\n");
-                        start();
-                    }
-                    int assignedStoragePlaceId = assignStoragePlaceId();
-                    ioService.displayMessage(assignedStoragePlaceId);
-                    if(confirmClosureStoragePlace()){
-                        int availableStoragePlace = storagePlace.getAvailableStoragePlace();
-                        availableStoragePlace -= 1;
-                        storagePlace.setAvailableStoragePlace(availableStoragePlace);
-                    }
-                    //vezi daca e nevoie sa actualizezi si locuri totale sau locuri ocupate
-                    //daca se razagandeste sa iasa din app si sa se reia menu
-                    //daca da sa se actualizeze numarul de locuri disponibile dupa accesare - REZOLVAT
-                    //daca nu mai sunt locuri disponibile trebuie sa iesi din metoda - REZOLVAT
-                    //nu uita sa actualizezi si dupa eliberarea locului
-                    String uniqueCode = generateCode();
-                    assignStoragePlaceUniqueCode(uniqueCode, assignedStoragePlaceId);
-                    String localDateTime = assignLocalDateTime(assignedStoragePlaceId);
-                    issueTicket(assignedStoragePlaceId, uniqueCode, localDateTime);
-
-
-                    System.out.println(idAvailabilityMap);
-                    System.out.println(idCodeMap);
-                    System.out.println(idLocalDateTimeMap);
-                    ioService.displayInfo("........................................................................");
+                    accessStoragePlace();
                     start();
+                    break;
                 }
                 case "2": {
-                    System.out.println("inseamna ca vrea sa ridice bagajul!");
-                    ioService.displayInfo("........................................................................");
+                    unlockedStoragePlace();
                     start();
+                    break;
                 }
             }
         }
     }
 
-    private void issueTicket(int assignedStoragePlaceId, String uniqueCode, String localDateTime) {
-        ioService.displayInfo("Here is your ticket: ");
+    private void unlockedStoragePlace() {
+        ioService.displayInfo("Please type the unique code: ");
+        String userInputUniqueCode = ioService.getUserInput();
+        boolean validateUniqueCode = validatorService.validateUniqueCode(userInputUniqueCode, idCodeMap);
+        if (!validateUniqueCode) {
+            start();
+        }
+        calculateTimeInMinute(userInputUniqueCode);
+
+        ioService.displayInfo("inseamna ca s-a validat codul unic.");
+        ioService.displayInfo("putem calcula timpul");
+        ioService.displayInfo("putem calcula pretul");
+        ioService.displayInfo("putem cere plata");
+        ioService.displayInfo("putem incasa plata");
+        ioService.displayInfo("putem afisa datele bagajului");
+        ioService.displayInfo("putem elibera bagajul");
+        ioService.displayInfo("putem actualiza datele din stoc disponibile, cod, si data");
+        delayService.introduceDelay();
+    }
+
+    private void calculateTimeInMinute(String userInputUniqueCode) {
+        ioService.displayInfo("calculez timpul");
+    }
+
+    private void accessStoragePlace() {
+        if (storagePlace.getAvailableStoragePlace() == 0) {
+            ioService.displayError("NO STORAGE PLACE IS AVAILABLE AT THIS MOMENT!");
+            delayService.introduceDelay();
+            start();
+        }
+        int assignedStoragePlaceId = assignStoragePlaceId();
+
+        ioService.displayInfo("Acum ii poti lua date despre bagaj");
+        delayService.introduceDelay();
+
+        ioService.displayMessage(assignedStoragePlaceId);
+
+        boolean confirmClosureStoragePlace = confirmClosureStoragePlace();
+        if (!confirmClosureStoragePlace) {
+            start();
+        }
+        idAvailabilityMap.replace(assignedStoragePlaceId, "unavailable");
+        updateStoragePlacesAvailability();
+        issueTicket(assignedStoragePlaceId);
+        System.out.println(idAvailabilityMap);
+        System.out.println(idCodeMap);
+        System.out.println(idLocalDateTimeMap);
+    }
+
+    private void updateStoragePlacesAvailability() {
+        int availableStoragePlace = storagePlace.getAvailableStoragePlace();
+        availableStoragePlace -= 1;
+        int occupiedStoragePlace = storagePlace.getOccupiedStoragePlace();
+        occupiedStoragePlace += 1;
+        storagePlace.setAvailableStoragePlace(availableStoragePlace);
+        storagePlace.setOccupiedStoragePlace(occupiedStoragePlace);
+    }
+
+    private void issueTicket(int assignedStoragePlaceId) {
+        String uniqueCode = generateCode();
+        assignStoragePlaceUniqueCode(uniqueCode, assignedStoragePlaceId);
+        String localDateTime = assignLocalDateTime(assignedStoragePlaceId);
+        ioService.displayInfo("Issue Ticket: ");
         ioService.displayInfo("Storage place id assigned: " + assignedStoragePlaceId);
         ioService.displayInfo("Unique code assigned: " + uniqueCode);
         ioService.displayInfo("Time in: " + localDateTime);
@@ -92,17 +132,23 @@ public class LuggageWarehouseManagementApp {
 
     private boolean confirmClosureStoragePlace() {
         String userConfirmation = ioService.getUserConfirmation();
-        if (!userConfirmation.equals("yes")) {
-            ioService.displayError(userConfirmation);
-            confirmClosureStoragePlace();
-            return false;
-        } else ioService.displayInfo("Closure confirmed!\n");
-        return true;
+        switch (userConfirmation) {
+            case "yes": {
+                ioService.displayInfo("Closure confirmed!\n");
+                return true;
+            }
+            case "cancel":
+                start();
+                return false;
+            default:
+                ioService.displayError(userConfirmation);
+                delayService.introduceDelay();
+                return false;
+        }
     }
 
     private String assignLocalDateTime(int assignedStoragePlaceId) {
         String localDateTime = "";
-
         for(Map.Entry <Integer, String> entry : idLocalDateTimeMap.entrySet()) {
             if (entry.getKey().equals(assignedStoragePlaceId)) {
                 idLocalDateTimeMap.replace(assignedStoragePlaceId, LocalDateTime.now().toString());
@@ -133,7 +179,6 @@ public class LuggageWarehouseManagementApp {
 //            }
             if (entry.getValue().equals("available")) {
                 assignedStoragePlaceId = entry.getKey();
-                idAvailabilityMap.replace(assignedStoragePlaceId, "unavailable");
                 break;
             }
         }
@@ -166,7 +211,7 @@ public class LuggageWarehouseManagementApp {
             String localDateTime = "";
             idLocalDateTimeMap.put(storagePlace.getId(), localDateTime);
         }
-//        System.out.println(idLocalDateTimeMap);
+        System.out.println(idLocalDateTimeMap);
     }
 
     private void warehouseCodeInitialSet(int totalStoragePlaces) {
@@ -175,7 +220,7 @@ public class LuggageWarehouseManagementApp {
             String code = "";
             idCodeMap.put(storagePlace.getId(), code);
         }
-//        System.out.println(idCodeMap);
+        System.out.println(idCodeMap);
     }
 
     private void warehouseAvailabilityInitialSet(int totalStoragePlaces) {
@@ -184,16 +229,13 @@ public class LuggageWarehouseManagementApp {
             String avaialble = "available";
             idAvailabilityMap.put(storagePlace.getId(), avaialble);
         }
-//        System.out.println(idAvailabilityMap);
+        System.out.println(idAvailabilityMap);
     }
 
     private int initialLoad() {
-        storagePlace.setTotalStoragePlace(3);
+        storagePlace.setTotalStoragePlace(4);
         storagePlace.setOccupiedStoragePlace(0);
         storagePlace.setAvailableStoragePlace(storagePlace.getTotalStoragePlace() - storagePlace.getOccupiedStoragePlace());
-        if (storagePlace.getAvailableStoragePlace() == 0) {
-            ioService.displayInfo("Sorry, but at the moment all storage places are occupied!");
-        }
         return storagePlace.getTotalStoragePlace();
     }
 }
