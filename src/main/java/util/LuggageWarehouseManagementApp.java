@@ -1,8 +1,10 @@
 package util;
 
 import model.StoragePlace;
+import model.Warehouse;
 import service.DelayService;
 import service.IOService;
+import service.UpdateService;
 import service.ValidatorService;
 
 import java.time.LocalDateTime;
@@ -12,6 +14,7 @@ import java.util.TreeMap;
 
 public class LuggageWarehouseManagementApp {
 
+    private Warehouse warehouse;
     private IOService ioService;
     private StoragePlace storagePlace;
     private ValidatorService validatorService;
@@ -19,8 +22,10 @@ public class LuggageWarehouseManagementApp {
     private Map <Integer, String> idCodeMap;
     private Map <Integer, String> idLocalDateTimeMap;
     private DelayService delayService;
+    private UpdateService updateService;
 
     public LuggageWarehouseManagementApp() {
+        this.warehouse = new Warehouse();
         this.ioService = new IOService();
         this.storagePlace = new StoragePlace();
         this.validatorService = new ValidatorService(ioService);
@@ -28,13 +33,14 @@ public class LuggageWarehouseManagementApp {
         this.idCodeMap = new TreeMap <>();
         this.idLocalDateTimeMap = new TreeMap <>();
         this.delayService = new DelayService();
+        this.updateService = new UpdateService(warehouse);
     }
 
 
     public void start() {
         while (true) {
             ioService.displayInfo("........................................................................");
-            ioService.displayMenu(storagePlace);
+            ioService.displayMenu(warehouse);
             String userInput = ioService.getUserInput();
             processUserInput(userInput);
             break;
@@ -53,7 +59,7 @@ public class LuggageWarehouseManagementApp {
                     break;
                 }
                 case "2": {
-                    unlockedStoragePlace();
+                    unlockStoragePlace();
                     start();
                     break;
                 }
@@ -61,63 +67,96 @@ public class LuggageWarehouseManagementApp {
         }
     }
 
-    private void unlockedStoragePlace() {
+    private void unlockStoragePlace() {
         ioService.displayInfo("Please type the unique code: ");
         String userInputUniqueCode = ioService.getUserInput();
         boolean validateUniqueCode = validatorService.validateUniqueCode(userInputUniqueCode, idCodeMap);
         if (!validateUniqueCode) {
-            start();
-        }
-        calculateTimeInMinute(userInputUniqueCode);
-
-        ioService.displayInfo("inseamna ca s-a validat codul unic.");
-        ioService.displayInfo("putem calcula timpul");
-        ioService.displayInfo("putem calcula pretul");
-        ioService.displayInfo("putem cere plata");
-        ioService.displayInfo("putem incasa plata");
-        ioService.displayInfo("putem afisa datele bagajului");
-        ioService.displayInfo("putem elibera bagajul");
-        ioService.displayInfo("putem actualiza datele din stoc disponibile, cod, si data");
-        delayService.introduceDelay();
-    }
-
-    private void calculateTimeInMinute(String userInputUniqueCode) {
-        ioService.displayInfo("calculez timpul");
-    }
-
-    private void accessStoragePlace() {
-        if (storagePlace.getAvailableStoragePlace() == 0) {
-            ioService.displayError("NO STORAGE PLACE IS AVAILABLE AT THIS MOMENT!");
+            ioService.displayError(userInputUniqueCode + " is not a valid code!");
             delayService.introduceDelay();
             start();
         }
-        int assignedStoragePlaceId = assignStoragePlaceId();
+        int timeInMinute = calculateTimeInMinute(userInputUniqueCode);
+        int price = calculatePrice(timeInMinute);
+        ioService.displayInfo("TO BE PAID: " + price + "LEI\n" +
+                              "Touch card here!");
 
-        ioService.displayInfo("Acum ii poti lua date despre bagaj");
+        ioService.displayInfo("valideaza cardul, valideaza plata");
+        ioService.displayInfo("putem incasa plata");
+        ioService.displayInfo("putem afisa datele bagajului");
+        ioService.displayInfo("putem elibera bagajul");
+
+        restoreAvailabilityAfterStoragePlaceRelease(userInputUniqueCode);
         delayService.introduceDelay();
+    }
 
+    private void restoreAvailabilityAfterStoragePlaceRelease(String userInputUniqueCode) {
+        for(Map.Entry <Integer, String> entry : idCodeMap.entrySet()) {
+            if (entry.getValue().equals(userInputUniqueCode)) {
+                Integer key = entry.getKey();
+                idAvailabilityMap.replace(key, "available");
+                idCodeMap.replace(key, "");
+                idLocalDateTimeMap.replace(key, "");
+                updateService.updateUpAvailability();
+                break;
+            }
+        }
+
+        System.out.println(idAvailabilityMap);
+        System.out.println(idCodeMap);
+        System.out.println(idLocalDateTimeMap);
+
+        start();
+    }
+
+    private int calculatePrice(int timeInMinute) {
+        int price = 0;
+        ioService.displayInfo("calculez pretul");
+        return price;
+    }
+
+    private int calculateTimeInMinute(String userInputUniqueCode) {
+        int timeToBeCalculate = 0;
+        ioService.displayInfo("calculez timpul");
+        return timeToBeCalculate;
+    }
+
+    private void accessStoragePlace() {
+        checkStoragePlaceAvailability();
+        int assignedStoragePlaceId = assignStoragePlaceId();
+        getDetailsAboutLuggage();
         ioService.displayMessage(assignedStoragePlaceId);
-
         boolean confirmClosureStoragePlace = confirmClosureStoragePlace();
         if (!confirmClosureStoragePlace) {
             start();
         }
         idAvailabilityMap.replace(assignedStoragePlaceId, "unavailable");
-        updateStoragePlacesAvailability();
+        updateService.updateDownAvailability();
         issueTicket(assignedStoragePlaceId);
-        System.out.println(idAvailabilityMap);
-        System.out.println(idCodeMap);
-        System.out.println(idLocalDateTimeMap);
+//        System.out.println(idAvailabilityMap);
+//        System.out.println(idCodeMap);
+//        System.out.println(idLocalDateTimeMap);
     }
 
-    private void updateStoragePlacesAvailability() {
-        int availableStoragePlace = storagePlace.getAvailableStoragePlace();
-        availableStoragePlace -= 1;
-        int occupiedStoragePlace = storagePlace.getOccupiedStoragePlace();
-        occupiedStoragePlace += 1;
-        storagePlace.setAvailableStoragePlace(availableStoragePlace);
-        storagePlace.setOccupiedStoragePlace(occupiedStoragePlace);
+    private void getDetailsAboutLuggage() {
+        ioService.getField("owner first name and last name");
+        ioService.getField("weight");
+        ioService.getField("length");
+        ioService.getField("width");
+        ioService.getField("height");
+        ioService.getField("color");
+
+        delayService.introduceDelay();
     }
+
+    private void checkStoragePlaceAvailability() {
+        if (warehouse.getAvailableStoragePlace() == 0) {
+            ioService.displayError("NO STORAGE PLACE IS AVAILABLE AT THIS MOMENT!");
+            delayService.introduceDelay();
+            start();
+        }
+    }
+
 
     private void issueTicket(int assignedStoragePlaceId) {
         String uniqueCode = generateCode();
@@ -141,7 +180,7 @@ public class LuggageWarehouseManagementApp {
                 start();
                 return false;
             default:
-                ioService.displayError(userConfirmation);
+                ioService.displayError(userConfirmation + " is not a valid option!");
                 delayService.introduceDelay();
                 return false;
         }
@@ -171,12 +210,6 @@ public class LuggageWarehouseManagementApp {
         int assignedStoragePlaceId = 0;
 
         for(Map.Entry <Integer, String> entry : idAvailabilityMap.entrySet()) {
-//            if (entry.getKey() == 1) {
-//                String value = entry.getValue();
-//                if (value.equals("available")) {
-//                    idAvailabilityMap.replace(1, "unavailable");
-//                }
-//            }
             if (entry.getValue().equals("available")) {
                 assignedStoragePlaceId = entry.getKey();
                 break;
@@ -233,9 +266,9 @@ public class LuggageWarehouseManagementApp {
     }
 
     private int initialLoad() {
-        storagePlace.setTotalStoragePlace(4);
-        storagePlace.setOccupiedStoragePlace(0);
-        storagePlace.setAvailableStoragePlace(storagePlace.getTotalStoragePlace() - storagePlace.getOccupiedStoragePlace());
-        return storagePlace.getTotalStoragePlace();
+        warehouse.setTotalStoragePlace(4);
+        warehouse.setOccupiedStoragePlace(0);
+        warehouse.setAvailableStoragePlace(warehouse.getTotalStoragePlace() - warehouse.getOccupiedStoragePlace());
+        return warehouse.getTotalStoragePlace();
     }
 }

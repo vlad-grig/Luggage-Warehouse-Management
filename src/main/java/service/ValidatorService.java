@@ -35,10 +35,8 @@ public class ValidatorService {
     }
 
     public boolean validateUniqueCode(String userInputUniqueCode, Map <Integer, String> idCodeMap) {
-        Iterator <Map.Entry <Integer, String>> iterator = idCodeMap.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Integer, String> entry = iterator.next();
-            if (entry.getValue().equals(userInputUniqueCode)){
+        for(Map.Entry <Integer, String> entry : idCodeMap.entrySet()) {
+            if (entry.getValue().equals(userInputUniqueCode)) {
                 return true;
             }
         }

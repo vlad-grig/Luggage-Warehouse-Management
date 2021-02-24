@@ -1,6 +1,7 @@
 package service;
 
 import model.StoragePlace;
+import model.Warehouse;
 
 import java.time.LocalDateTime;
 import java.util.Scanner;
@@ -10,15 +11,16 @@ public class IOService {
     private Scanner scanner = new Scanner(System.in);
 
 
-    public void displayMenu(StoragePlace storagePlace) {
-        welcomeMessage();
-        displayAvailableStoragePlaces(storagePlace);
+    public void displayMenu(Warehouse warehouse) {
+        displayWelcomeMessage();
+        displayAvailableStoragePlaces(warehouse);
+        displayInfo("CARD PAYMENTS ONLY\n");
         displayCostsInfo();
         displayInfo("Are you interested in accessing a baggage storage place?");
         displayInfo("Please make your choice: \n" +
-                    "0 for no \n" +
-                    "1 for yes \n" +
-                    "2 for unlock your storage place");
+//                    "0 for NO \n" +
+                    "1 to ACCESS the service \n" +
+                    "2 to UNLOCK your storage place");
     }
 
     public void displayInfo(String s) {
@@ -32,12 +34,9 @@ public class IOService {
                     "61 minutes -> 2 hours -> 10 + 5 = 15 lei\n");
     }
 
-    private void displayAvailableStoragePlaces(StoragePlace storagePlace) {
+    private void displayAvailableStoragePlaces(Warehouse warehouse) {
         displayLocalDateTime();
-        displayInfo("Available storage places: " + storagePlace.getAvailableStoragePlace());
-        displayInfo("Occupied storage places: " + storagePlace.getOccupiedStoragePlace());
-        displayInfo("Total storage places: " + storagePlace.getTotalStoragePlace()+ "\n");
-
+        displayInfo("AVAILABLE storage places: " + warehouse.getAvailableStoragePlace() + "\n");
     }
 
     private void displayLocalDateTime() {
@@ -50,10 +49,10 @@ public class IOService {
     }
 
     public void displayError(String error) {
-        System.out.println("Error: " + error);
+        System.out.println("ERROR: " + error);
     }
 
-    public void welcomeMessage() {
+    public void displayWelcomeMessage() {
         System.out.println("Welcome to Luggage Warehouse!\n");
     }
 
@@ -70,6 +69,11 @@ public class IOService {
     public String getUserConfirmation() {
         displayInfo("Type 'yes' for confirmation closure: ");
         displayInfo("Type 'cancel' for exit: ");
+        return scanner.nextLine();
+    }
+
+    public String getField(String field) {
+        displayInfo("Please insert " + field + ": " );
         return scanner.nextLine();
     }
 }
