@@ -82,7 +82,7 @@ public class LuggageWarehouseManagementApp {
                               "Touch card here!");
 
         ioService.displayInfo("valideaza cardul, valideaza plata");
-        ioService.displayInfo("putem incasa plata");
+        ioService.displayInfo("putem incasa plata si stoca banii");
         ioService.displayInfo("putem afisa datele bagajului");
         ioService.displayInfo("putem elibera bagajul");
 
@@ -133,9 +133,6 @@ public class LuggageWarehouseManagementApp {
         idAvailabilityMap.replace(assignedStoragePlaceId, "unavailable");
         updateService.updateDownAvailability();
         issueTicket(assignedStoragePlaceId);
-//        System.out.println(idAvailabilityMap);
-//        System.out.println(idCodeMap);
-//        System.out.println(idLocalDateTimeMap);
     }
 
     private void getDetailsAboutLuggage() {
@@ -145,7 +142,7 @@ public class LuggageWarehouseManagementApp {
         ioService.getField("width");
         ioService.getField("height");
         ioService.getField("color");
-
+        ioService.displayInfo("Voi stoca datele dupa confirmare.");
         delayService.introduceDelay();
     }
 
@@ -241,10 +238,9 @@ public class LuggageWarehouseManagementApp {
     private void warehouseLocalDateTimeInitialSet(int totalStoragePlaces) {
         for(int index = 1; index <= totalStoragePlaces; index++) {
             storagePlace.setId(index);
-            String localDateTime = "";
-            idLocalDateTimeMap.put(storagePlace.getId(), localDateTime);
+            storagePlace.setStartTimer(LocalDateTime.now());
+            idLocalDateTimeMap.put(storagePlace.getId(), storagePlace.getStartTimer().toString());
         }
-        System.out.println(idLocalDateTimeMap);
     }
 
     private void warehouseCodeInitialSet(int totalStoragePlaces) {
@@ -253,7 +249,6 @@ public class LuggageWarehouseManagementApp {
             String code = "";
             idCodeMap.put(storagePlace.getId(), code);
         }
-        System.out.println(idCodeMap);
     }
 
     private void warehouseAvailabilityInitialSet(int totalStoragePlaces) {
@@ -262,7 +257,6 @@ public class LuggageWarehouseManagementApp {
             String avaialble = "available";
             idAvailabilityMap.put(storagePlace.getId(), avaialble);
         }
-        System.out.println(idAvailabilityMap);
     }
 
     private int initialLoad() {

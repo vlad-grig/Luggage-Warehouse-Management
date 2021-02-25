@@ -1,6 +1,5 @@
 package service;
 
-import model.StoragePlace;
 import model.Warehouse;
 
 import java.time.LocalDateTime;

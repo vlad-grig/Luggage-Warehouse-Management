@@ -7,11 +7,13 @@ public class StoragePlace {
     private int id;
     private LocalDateTime startTimer;
     private LocalDateTime endTimer;
+    private Luggage luggage;
 
-    public StoragePlace(int id, LocalDateTime startTimer, LocalDateTime endTimer) {
+    public StoragePlace(int id, LocalDateTime startTimer, LocalDateTime endTimer, Luggage luggage) {
         this.id = id;
         this.startTimer = startTimer;
         this.endTimer = endTimer;
+        this.luggage = luggage;
     }
 
     public StoragePlace() {
@@ -39,5 +41,13 @@ public class StoragePlace {
 
     public void setEndTimer(LocalDateTime endTimer) {
         this.endTimer = endTimer;
+    }
+
+    public Luggage getLuggage() {
+        return luggage;
+    }
+
+    public void setLuggage(Luggage luggage) {
+        this.luggage = luggage;
     }
 }
